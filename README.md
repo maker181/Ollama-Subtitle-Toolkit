@@ -30,12 +30,3 @@
 
 ## 📄 授權協議
 MIT License
-
-## 🚀 快速開始
-1. 安裝依賴：
-   pip install -r requirements.txt
-2. 確保 Ollama 已執行並下載了您需要的模型（如 qwen2.5:1.5b）。
-3. 依序執行三部曲，即可獲得高品質繁體字幕。
-
-## 📄 授權協議
-MIT License
