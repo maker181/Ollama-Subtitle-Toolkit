@@ -30,24 +30,26 @@ def should_skip(text):
 
 def clean_output(translated):
     if not translated: return ""
-    # 移除 AI 思考標籤與前後多餘引號
+    # 移除思考過程與引號
     translated = re.sub(r"<think>.*?</think>", '', translated, flags=re.DOTALL)
     translated = translated.strip().strip('"').strip("'")
     
-    # 移除可能殘留的前導標籤 (只在最前面出現時)
-    prefixes = ["Chinese:", "中文:", "翻譯:", "Translation:"]
-    for p in prefixes:
-        if translated.lower().startswith(p.lower()):
-            translated = translated[len(p):].strip()
+    # 如果輸出包含「根據、輸入、對話」等 AI 常用的分析詞彙且長度過長，可能是廢話
+    if len(translated) > 50 and any(w in translated for w in ["輸入", "內容", "對話", "可能是", "根據"]):
+        # 嘗試只取第一句
+        translated = translated.split('。')[0] + '。'
             
     return translated.strip()
 
 def translate_text(text, model_name, retry=0):
     if should_skip(text): return text
     
-    # 稍微明確一點的指令，避免模型發呆
-    system_prompt = "You are a professional subtitle translator. Translate the given text into Chinese. Output ONLY the translated text."
-    user_msg = f"Please translate this text into Chinese: {text}"
+    # 強力限制：只准翻譯，不准廢話
+    system_prompt = "You are a professional subtitle translator. Translate English to Chinese. Output ONLY the translation. NO explanations. NO notes."
+    
+    # 使用填空格式，並將原文的換行轉成空格，確保輸出也是單行
+    clean_text = text.replace('\n', ' ')
+    user_msg = f"English: {clean_text}\nChinese:"
     
     payload = {
         "model": model_name,
@@ -57,9 +59,9 @@ def translate_text(text, model_name, retry=0):
         ],
         "stream": False,
         "options": {
-            "temperature": 0.3, # 稍微調高一點點，增加穩定性
-            "num_predict": 100,
-            "stop": ["User:", "System:", "Please translate"] 
+            "temperature": 0.0,  # 設為 0 最穩定，不會有幻覺
+            "num_predict": 50,   # 限制輸出長度
+            "stop": ["\n", "English:", "Note:"] # 只要換行就立刻停止，防止輸出分析
         }
     }
     
@@ -69,7 +71,7 @@ def translate_text(text, model_name, retry=0):
         translated = result.get("message", {}).get("content", "").strip()
         cleaned = clean_output(translated)
         
-        # 如果翻譯失敗回傳空值，重試一次
+        # 漏翻檢查
         if not cleaned and retry < 1:
             return translate_text(text, model_name, retry + 1)
         
@@ -106,7 +108,7 @@ def process_srt(input_path, model_name):
 
 def main():
     models = get_ollama_models()
-    print("\n" + "="*40 + "\n  transrt_fast - 核心修正版\n" + "="*40)
+    print("\n" + "="*40 + "\n  transrt_fast - 穩定填空版\n" + "="*40)
     
     if not models:
         model_name = input("模型名稱: ").strip()
