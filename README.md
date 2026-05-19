@@ -19,12 +19,12 @@
    - 快速將英文字幕翻譯成中文。
 2. `retranslate_en.py` (深度修補)：
    - 自動掃描漏翻行及中英混雜行並進行二次翻譯。
-3. `s2t_srt.py` (純淨簡轉繁)：
-   - 將翻譯結果統一轉換為繁體中文。
+3. `s2t.py` (純淨簡轉繁)：
+   - 將翻譯結果統一轉換為繁體中文(須依賴 opencc。
 
 ## 🚀 快速開始
 1. 安裝依賴：
-   `pip install -r requirements.txt`
+   `pip install pysrt requests opencc`
 2. 確保 Ollama 已執行並下載了您需要的模型（如 `qwen2.5:1.5b`）。
 3. 執行 `python transrt_ultra.py` 並依照提示輸入路徑。
 
